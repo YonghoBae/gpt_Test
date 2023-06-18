@@ -1,0 +1,104 @@
+
+{% extends 'base.html' %}
+{% load market_filter %}
+{% load time_since %}
+{% load humanize %}
+{% block content %}
+<div class="container my-3">
+    <div class="row my-3">
+        <div class="col-6">
+            <a href="{% url 'market:Product_create' %}" class="btn btn-primary">상품등록</a>
+        </div>
+    </div>
+    <hr>
+    <h2>찜한 상품</h2>
+
+    <div class="row">
+        {% if liked_products %}
+        {% for Product in liked_products %}
+        <div class="col-3">
+            <div class="item">
+                {% if Product.image %}
+                <a href="{% url 'market:detail' Product.id %}">
+                    <img src="{{ Product.image.url }}" style="width:200px; height:200px; border:1px solid #eaeaea; padding: 0px; border-radius: 10px;" alt="{{ Product.name }}">
+                </a>
+                {% endif %}
+                <div class="card p-1" style="width: 200px;">
+                    <p class="name" style="white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">{{ Product.name }}</p>
+                    <div style="display: flex; justify-content: space-between;">
+                        <span class="price" style="font-weight: 500;"><strong>{{ Product.price|intcomma }}원</strong></span>
+                        <span class="time" style="font-size: 12px; text-align:right">{{ Product.create_date|time_since }}</span>
+                    </div>
+                </div>
+            </div>
+            <br>
+        </div>
+        {% endfor %}
+        {% else %}
+            <div class="col">
+                <p>찜한 제품이 없습니다.</p>
+            </div>
+        {% endif %}
+    </div>
+</div>
+    <!-- 페이징처리 시작 -->
+    <ul class="pagination justify-content-center">
+        <!-- 이전페이지 -->
+        {% if Product_list.has_previous %}
+        <li class="page-item">
+            <a class="page-link" data-page="{{ Product_list.previous_page_number }}" href="javascript:void(0)">이전</a>
+        </li>
+        {% else %}
+        <li class="page-item disabled">
+            <a class="page-link" tabindex="-1" aria-disabled="true" href="#">이전</a>
+        </li>
+        {% endif %}
+        <!-- 페이지리스트 -->
+        {% for page_number in Product_list.paginator.page_range %}
+        {% if page_number >= Product_list.number|add:-5 and page_number <= Product_list.number|add:5 %}
+        {% if page_number == Product_list.number %}
+        <li class="page-item active" aria-current="page">
+            <a class="page-link" data-page="{{ page_number }}" href="javascript:void(0)">{{ page_number }}</a>
+        </li>
+        {% else %}
+        <li class="page-item">
+            <a class="page-link" data-page="{{ page_number }}" href="javascript:void(0)">{{ page_number }}</a>
+        </li>
+        {% endif %}
+        {% endif %}
+        {% endfor %}
+        <!-- 다음페이지 -->
+        {% if Product_list.has_next %}
+        <li class="page-item">
+            <a class="page-link" data-page="{{ Product_list.next_page_number }}" href="javascript:void(0)">다음</a>
+        </li>
+        {% else %}
+        <li class="page-item disabled">
+            <a class="page-link" tabindex="-1" aria-disabled="true" href="#">다음</a>
+        </li>
+        {% endif %}
+    </ul>
+    <!-- 페이징처리 끝 -->
+    </div>
+    <form id="searchForm" method="get" action="{% url 'index' %}">
+    <input type="hidden" id="kw" name="kw" value="{{ kw|default_if_none:'' }}">
+    <input type="hidden" id="page" name="page" value="{{ page }}">
+</form>
+{% endblock %}
+{% block script %}
+<script type='text/javascript'>
+const page_elements = document.getElementsByClassName("page-link");
+Array.from(page_elements).forEach(function(element) {
+    element.addEventListener('click', function() {
+        document.getElementById('page').value = this.dataset.page;
+        document.getElementById('searchForm').submit();
+    });
+});
+const btn_search = document.getElementById("btn_search");
+btn_search.addEventListener('click', function() {
+    document.getElementById('kw').value = document.getElementById('search_kw').value;
+    document.getElementById('page').value = 1;  // 검색버튼을 클릭할 경우 1페이지부터 조회한다.
+    document.getElementById('searchForm').submit();
+});
+</script>
+{% endblock %}
